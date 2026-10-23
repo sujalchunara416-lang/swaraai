@@ -1,394 +1,176 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SWARA AI - Liquid Glass</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2230%22 fill=%22%233b82f6%22/><text y=%2254%%22 x=%2250%%22 dominant-baseline=%22central%22 text-anchor=%22middle%22 font-size=%2255%22 fill=%22white%22 font-family=%22Segoe UI, sans-serif%22 font-weight=%22bold%22>S</text></svg>">
-    <style>
-        :root {
-            --bg-gradient: radial-gradient(circle at top right, #1e1b4b, #0f172a, #020617);
-            --glass-bg: rgba(17, 24, 39, 0.65);
-            --glass-card: rgba(30, 41, 59, 0.55);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-blur: blur(16px);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        
-        body { 
-            background: var(--bg-gradient); 
-            color: var(--text-main); 
-            height: 100vh; 
-            height: 100dvh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-        }
-
-        /* Liquid Glass Header */
-        header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 12px 18px; 
-            background: var(--glass-bg); 
-            backdrop-filter: var(--glass-blur); 
-            -webkit-backdrop-filter: var(--glass-blur);
-            border-bottom: 1px solid var(--glass-border); 
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-            z-index: 10;
-        }
-
-        .brand { display: flex; align-items: center; gap: 10px; }
-        .logo-box { 
-            width: 34px; 
-            height: 34px; 
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6); 
-            border-radius: 10px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: 700; 
-            color: white; 
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-        }
-        .brand-title { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
-
-        .toolbar { display: flex; gap: 6px; align-items: center; }
-        
-        button, select, input { 
-            background: var(--glass-card); 
-            backdrop-filter: blur(8px);
-            border: 1px solid var(--glass-border); 
-            color: var(--text-main); 
-            padding: 6px 12px; 
-            border-radius: 8px; 
-            font-size: 12px; 
-            outline: none; 
-            transition: all 0.2s ease; 
-        }
-        button { background: var(--accent); border: none; font-weight: 600; cursor: pointer; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
-        button:hover { background: var(--accent-hover); box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); }
-        select { cursor: pointer; }
-
-        /* Glass Settings Drawer */
-        .settings-drawer { 
-            background: var(--glass-bg); 
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            padding: 12px 18px; 
-            border-bottom: 1px solid var(--glass-border); 
-            display: flex; 
-            gap: 10px; 
-            align-items: center; 
-            transition: all 0.3s ease; 
-            overflow: hidden; 
-            max-height: 70px; 
-        }
-        .settings-drawer.hidden { max-height: 0; padding: 0 18px; border: none; }
-        .settings-drawer input { flex: 1; padding: 8px 12px; font-size: 13px; }
-
-        .status-strip { font-size: 10px; color: var(--text-muted); text-align: center; padding: 4px; background: rgba(2, 6, 23, 0.5); letter-spacing: 1px; }
-
-        /* Chat Stream */
-        #chat { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 16px; 
-            scroll-behavior: smooth; 
-        }
-
-        .message-row { display: flex; gap: 12px; max-width: 88%; animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .message-row.user { align-self: flex-end; flex-direction: row-reverse; }
-        .message-row.bot { align-self: flex-start; }
-
-        .msg-avatar { 
-            width: 32px; 
-            height: 32px; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 13px; 
-            flex-shrink: 0; 
-        }
-        .user .msg-avatar { background: var(--accent); color: white; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
-        .bot .msg-avatar { background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; box-shadow: 0 0 10px rgba(139, 92, 246, 0.4); }
-
-        .msg-bubble { 
-            padding: 12px 16px; 
-            border-radius: 14px; 
-            font-size: 14px; 
-            line-height: 1.6; 
-            word-break: break-word; 
-            white-space: pre-wrap;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        .user .msg-bubble { background: rgba(37, 99, 235, 0.85); color: white; border-bottom-right-radius: 4px; box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3); }
-        .bot .msg-bubble { background: var(--glass-card); color: var(--text-main); border: 1px solid var(--glass-border); border-bottom-left-radius: 4px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
-
-        /* Typing Dots */
-        .typing-dots { display: flex; gap: 5px; padding: 6px 4px; align-items: center; }
-        .typing-dots span { width: 7px; height: 7px; background: var(--text-muted); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
-        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
-
-        /* Liquid Glass Footer Input */
-        .input-footer { 
-            padding: 14px 18px; 
-            background: var(--glass-bg); 
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            border-top: 1px solid var(--glass-border); 
-            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3);
-        }
-        .input-wrapper { 
-            display: flex; 
-            background: rgba(15, 23, 42, 0.7); 
-            backdrop-filter: blur(8px);
-            border: 1px solid var(--glass-border); 
-            border-radius: 12px; 
-            padding: 6px 8px 6px 14px; 
-            gap: 10px; 
-            align-items: center; 
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
-            transition: all 0.2s;
-        }
-        .input-wrapper:focus-within { border-color: var(--accent); box-shadow: 0 0 15px rgba(59, 130, 246, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.4); }
-        
-        .input-wrapper input { 
-            flex: 1; 
-            border: none; 
-            background: transparent; 
-            font-size: 14px; 
-            color: var(--text-main); 
-        }
-        .input-wrapper input:focus { outline: none; }
-
-        .send-btn { 
-            width: 38px; 
-            height: 38px; 
-            border-radius: 9px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            background: var(--accent); 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            font-size: 15px; 
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080b18">
+<title>SWARA AI</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080b18;color:#eef2ff;font-family:system-ui,Arial,sans-serif}
+header{text-align:center;padding:22px;border-bottom:1px solid #26304a}
+h1{margin:0;color:#85e9ff;letter-spacing:6px;font-size:32px}
+small{color:#a8b2d0}
+main{max-width:700px;margin:auto;padding:16px}
+.orb{width:110px;height:110px;margin:22px auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,white,#71eaff 18%,#6557ff 55%,#14132d 75%);box-shadow:0 0 35px #6557ff88;animation:pulse 3s infinite}
+@keyframes pulse{50%{box-shadow:0 0 60px #71eaff88}}
+#status{text-align:center;color:#85e9ff;font-size:13px;margin-bottom:14px}
+#chat{height:42vh;min-height:220px;overflow-y:auto;padding:12px;background:#10152a;border:1px solid #27304f;border-radius:16px}
+.msg{padding:11px 13px;margin:9px 0;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.user{background:#26345c;margin-left:12%;text-align:right}
+.bot{background:#171f38;margin-right:8%}
+.controls{display:flex;gap:8px;margin-top:12px}
+input,button,select{font:inherit;border-radius:10px;border:1px solid #303958;padding:12px;background:#151b30;color:white}
+input{min-width:0;flex:1}
+button{cursor:pointer}
+button:disabled{opacity:.5}
+.primary{background:#5149d9;border:0}
+.settings{display:grid;gap:8px;margin-top:16px}
+.settings input,.settings select{width:100%}
+.note{font-size:12px;color:#9ca9c8;line-height:1.5}
+</style>
 </head>
 <body>
-    <header>
-        <div class="brand">
-            <div class="logo-box">S</div>
-            <div class="brand-title">SWARA AI</div>
-        </div>
-        <div class="toolbar">
-            <select id="model-select">
-                <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
-                <option value="gemini-3.5-pro">Gemini 3.5 Pro</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-            </select>
-            <button id="toggle-settings" title="Settings">⚙️</button>
-            <button id="clear" title="Clear">🗑️</button>
-            <button id="voice" title="Voice">🔊</button>
-        </div>
-    </header>
+<header>
+<h1>SWARA</h1>
+<small>Your Personal AI Companion</small>
+</header>
+<main>
+<div class="orb"></div>
+<div id="status">READY TO CONNECT</div>
+<div id="chat" aria-live="polite"></div>
+<div class="controls">
+<input id="message" placeholder="Talk to SWARA..." autocomplete="off">
+<button id="send" class="primary">Send</button>
+</div>
+<div class="controls">
+<button id="mic">🎙 Speak</button>
+<button id="voice">🔊 Voice ON</button>
+<button id="clear">Clear Chat</button>
+</div>
+<div class="settings">
+<label for="key">Gemini API Key</label>
+<input id="key" type="password" placeholder="Paste your API key">
+<label for="model">AI Model</label>
+<select id="model">
+<option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+</select>
+<button id="save" class="primary">Save Settings</button>
+<p class="note">Settings and chat are stored in this browser. Never publish your API key in public code. A secure public app needs a backend to protect it.</p>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const KEY="swara_key_v1";
+const MODEL="swara_model_v1";
+const HISTORY="swara_history_v1";
+let voiceOn=true;
+let history=[];
+try{history=JSON.parse(localStorage.getItem(HISTORY)||"[]")}catch(e){history=[]}
+$("key").value=localStorage.getItem(KEY)||"";
+$("model").value=localStorage.getItem(MODEL)||"gemini-2.5-flash";
 
-    <div class="settings-drawer hidden" id="settings-drawer">
-        <input type="password" id="key" placeholder="Enter Gemini API Key...">
-        <button id="save">Save Key</button>
-    </div>
+function saveHistory(){
+try{localStorage.setItem(HISTORY,JSON.stringify(history.slice(-60)))}catch(e){}
+}
+function addMessage(role,text,save=true){
+const d=document.createElement("div");
+d.className="msg "+(role==="user"?"user":"bot");
+d.textContent=text;
+$("chat").appendChild(d);
+$("chat").scrollTop=$("chat").scrollHeight;
+if(save){history.push({role,text});saveHistory()}
+}
+history.forEach(m=>addMessage(m.role,m.text,false));
+if(!history.length)addMessage("bot","Hey! Main SWARA hoon. 💙 Apni API key settings mein save karo aur phir mujhse baat karo.");
 
-    <div class="status-strip" id="status">SYSTEM READY</div>
+$("save").onclick=()=>{
+try{
+localStorage.setItem(KEY,$("key").value.trim());
+localStorage.setItem(MODEL,$("model").value);
+$("status").textContent="SETTINGS SAVED";
+alert("Settings saved in this browser.");
+}catch(e){alert("Browser storage unavailable.")}
+};
 
-    <div id="chat"></div>
+$("clear").onclick=()=>{
+if(!confirm("Delete all chat history?"))return;
+history=[];
+saveHistory();
+$("chat").replaceChildren();
+addMessage("bot","Nayi shuruaat! 💙",false);
+};
 
-    <div class="input-footer">
-        <div class="input-wrapper">
-            <input type="text" id="message" placeholder="Ask SWARA anything...">
-            <button class="send-btn" id="send">➤</button>
-        </div>
-    </div>
+$("voice").onclick=()=>{
+voiceOn=!voiceOn;
+$("voice").textContent=voiceOn?"🔊 Voice ON":"🔇 Voice OFF";
+if(!voiceOn&&"speechSynthesis"in window)speechSynthesis.cancel();
+};
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const $ = id => document.getElementById(id);
-            const KEY = "swara_key_v8";
-            const MODEL = "swara_model_v8";
-            const HISTORY = "swara_history_v8";
-            let voiceOn = true;
-            let history = [];
+function speak(text){
+if(!voiceOn||!("speechSynthesis"in window))return;
+speechSynthesis.cancel();
+const u=new SpeechSynthesisUtterance(text);
+u.lang="hi-IN";
+const voices=speechSynthesis.getVoices();
+const hindi=voices.find(v=>v.lang.toLowerCase().startsWith("hi"));
+if(hindi)u.voice=hindi;
+speechSynthesis.speak(u);
+}
 
-            try {
-                history = JSON.parse(localStorage.getItem(HISTORY)) || [];
-            } catch(e) { history = []; }
+async function sendMessage(){
+const text=$("message").value.trim();
+if(!text)return;
+const apiKey=$("key").value.trim()||localStorage.getItem(KEY);
+const model=$("model").value;
+addMessage("user",text);
+$("message").value="";
+if(!apiKey){
+addMessage("bot","Pehle Gemini API key daalo aur Save Settings dabao.");
+return;
+}
+$("send").disabled=true;
+$("status").textContent="SWARA IS THINKING...";
+try{
+const contents=history
+.filter(m=>m.role==="user"||m.role==="assistant")
+.slice(-20)
+.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.text}]}));
+const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent",{
+method:"POST",
+headers:{"Content-Type":"application/json","x-goog-api-key":apiKey},
+body:JSON.stringify({
+systemInstruction:{parts:[{text:"You are SWARA, a friendly female AI companion. Be warm, natural, supportive and helpful. Speak Hindi or Hinglish when the user does. Never claim to be human."}]},
+contents,
+generationConfig:{temperature:0.8,maxOutputTokens:700}
+})
+});
+const data=await res.json();
+if(!res.ok)throw Error(data.error?.message||"API request failed");
+const answer=data.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
+if(!answer)throw Error("Empty AI response");
+addMessage("assistant",answer);
+speak(answer);
+$("status").textContent="SWARA IS ONLINE";
+}catch(e){
+addMessage("bot","Error: "+e.message+"\nAPI key, model aur internet check karo.");
+$("status").textContent="CONNECTION ERROR";
+}finally{$("send").disabled=false}
+}
+$("send").onclick=sendMessage;
+$("message").addEventListener("keydown",e=>{if(e.key==="Enter")sendMessage()});
 
-            if($("key")) $("key").value = localStorage.getItem(KEY) || "";
-            if($("model-select")) $("model-select").value = localStorage.getItem(MODEL) || "gemini-3.8-flash";
-
-            $("toggle-settings").onclick = () => $("settings-drawer").classList.toggle("hidden");
-
-            $("model-select").onchange = () => {
-                localStorage.setItem(MODEL, $("model-select").value);
-            };
-
-            function saveHistory() {
-                try { localStorage.setItem(HISTORY, JSON.stringify(history.slice(-50))); } catch(e) {}
-            }
-
-            function addMessage(role, text, save=true) {
-                const chatBox = $("chat");
-                if(!chatBox) return;
-
-                const row = document.createElement("div");
-                row.className = "message-row " + role;
-
-                const avatar = document.createElement("div");
-                avatar.className = "msg-avatar";
-                avatar.textContent = role === "user" ? "👤" : "✨";
-
-                const bubble = document.createElement("div");
-                bubble.className = "msg-bubble";
-                bubble.textContent = text;
-
-                row.appendChild(avatar);
-                row.appendChild(bubble);
-                chatBox.appendChild(row);
-                chatBox.scrollTop = chatBox.scrollHeight;
-
-                if(save) {
-                    history.push({role, text});
-                    saveHistory();
-                }
-            }
-
-            function showTyping() {
-                const chatBox = $("chat");
-                const row = document.createElement("div");
-                row.className = "message-row bot";
-                row.id = "typing-indicator";
-                
-                const avatar = document.createElement("div");
-                avatar.className = "msg-avatar";
-                avatar.textContent = "✨";
-
-                const bubble = document.createElement("div");
-                bubble.className = "msg-bubble";
-                bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
-
-                row.appendChild(avatar);
-                row.appendChild(bubble);
-                chatBox.appendChild(row);
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
-
-            function hideTyping() {
-                const t = $("typing-indicator");
-                if(t) t.remove();
-            }
-
-            history.forEach(m => addMessage(m.role, m.text, false));
-            if(history.length === 0) {
-                addMessage("bot", "Hello! Main SWARA hoon. 💙 Liquid Glass UI ke sath ready hoon. Settings (⚙️) mein API key save karein.", false);
-            }
-
-            $("save").onclick = () => {
-                localStorage.setItem(KEY, $("key").value.trim());
-                localStorage.setItem(MODEL, $("model-select").value);
-                $("status").textContent = "SETTINGS SAVED";
-                $("settings-drawer").classList.add("hidden");
-                setTimeout(() => $("status").textContent = "SYSTEM READY", 2000);
-            };
-
-            $("clear").onclick = () => {
-                if(!confirm("Clear chat history?")) return;
-                history = [];
-                saveHistory();
-                if($("chat")) $("chat").replaceChildren();
-                addMessage("bot", "Nayi shuruaat! 💙", false);
-            };
-
-            $("voice").onclick = () => {
-                voiceOn = !voiceOn;
-                $("voice").textContent = voiceOn ? "🔊" : "🔇";
-                if(!voiceOn && "speechSynthesis" in window) speechSynthesis.cancel();
-            };
-
-            async function sendMessage() {
-                const msgInput = $("message");
-                const text = msgInput.value.trim();
-                if(!text) return;
-                
-                const apiKey = $("key").value.trim() || localStorage.getItem(KEY);
-                const model = $("model-select").value;
-
-                if(!apiKey) {
-                    addMessage("bot", "Pehle Settings (⚙️) mein apni Gemini API Key daal kar save karein.");
-                    $("settings-drawer").classList.remove("hidden");
-                    return;
-                }
-
-                addMessage("user", text);
-                msgInput.value = "";
-                $("status").textContent = "THINKING...";
-                showTyping();
-
-                try {
-                    const contents = history.slice(0, -1).map(h => ({
-                        role: h.role === "user" ? "user" : "model",
-                        parts: [{ text: h.text }]
-                    }));
-                    contents.push({ role: "user", parts: [{ text: text }] });
-
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ contents })
-                    });
-
-                    const data = await response.json();
-                    hideTyping();
-                    $("status").textContent = "SYSTEM READY";
-
-                    if(data.candidates && data.candidates[0].content) {
-                        const reply = data.candidates[0].content.parts[0].text;
-                        addMessage("bot", reply);
-                        if(voiceOn && "speechSynthesis" in window) {
-                            speechSynthesis.cancel();
-                            const u = new SpeechSynthesisUtterance(reply);
-                            u.lang = "hi-IN";
-                            speechSynthesis.speak(u);
-                        }
-                    } else {
-                        addMessage("bot", "API Error: " + (data.error?.message || "Model response error. Try switching model dropdown."));
-                    }
-                } catch(err) {
-                    hideTyping();
-                    $("status").textContent = "ERROR";
-                    addMessage("bot", "Network error: " + err.message);
-                }
-            }
-
-            $("send").onclick = sendMessage;
-            $("message").onkeydown = (e) => { if(e.key === "Enter") sendMessage(); };
-        });
-    </script>
+$("mic").onclick=()=>{
+const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!Recognition){alert("Mic recognition support nahi hai. Chrome mein try karo.");return}
+const r=new Recognition();
+r.lang="hi-IN";
+r.interimResults=false;
+r.onresult=e=>{$("message").value=e.results[0][0].transcript;sendMessage()};
+r.onerror=e=>alert("Mic error: "+e.error);
+r.start();
+};
+</script>
 </body>
 </html>
