@@ -1,0 +1,120 @@
+<script>
+const $=id=>document.getElementById(id);
+const KEY="swara_key_v1";
+const MODEL="swara_model_v1";
+const HISTORY="swara_history_v1";
+let voiceOn=true;
+let history=[];
+try{history=JSON.parse(localStorage.getItem(HISTORY)||"[]")}catch(e){history=[]}
+$("key").value=localStorage.getItem(KEY)||"";
+$("model").value=localStorage.getItem(MODEL)||"gemini-2.5-flash";
+
+function saveHistory(){
+try{localStorage.setItem(HISTORY,JSON.stringify(history.slice(-60)))}catch(e){}
+}
+
+function addMessage(role,text,save=true){
+const d=document.createElement("div");
+d.className="msg "+(role==="user"?"user":"bot");
+d.textContent=text;
+$("chat").appendChild(d);
+$("chat").scrollTop=$("chat").scrollHeight;
+if(save){history.push({role,text});saveHistory()}
+}
+
+history.forEach(m=>addMessage(m.role,m.text,false));
+if(!history.length)addMessage("bot","Hey! Main SWARA hoon. 💙 Apni API key settings mein save karo aur phir mujhse baat karo.");
+
+$("save").onclick=()=>{
+try{
+localStorage.setItem(KEY,$("key").value.trim());
+localStorage.setItem(MODEL,$("model").value);
+$("status").textContent="SETTINGS SAVED";
+alert("Settings saved in this browser.");
+}catch(e){alert("Browser storage unavailable.")}
+};
+
+$("clear").onclick=()=>{
+if(!confirm("Delete all chat history?"))return;
+history=[];
+saveHistory();
+$("chat").replaceChildren();
+addMessage("bot","Nayi shuruaat! 💙",false);
+};
+
+$("voice").onclick=()=>{
+voiceOn=!voiceOn;
+$("voice").textContent=voiceOn?"🔊 Voice ON":"🔇 Voice OFF";
+if(!voiceOn&&"speechSynthesis"in window)speechSynthesis.cancel();
+};
+
+function speak(text){
+if(!voiceOn||!("speechSynthesis"in window))return;
+speechSynthesis.cancel();
+const u=new SpeechSynthesisUtterance(text);
+u.lang="hi-IN";
+const voices=speechSynthesis.getVoices();
+const hindi=voices.find(v=>v.lang.toLowerCase().startsWith("hi"));
+if(hindi)u.voice=hindi;
+speechSynthesis.speak(u);
+}
+
+async function sendMessage(){
+const text=$("message").value.trim();
+if(!text)return;
+const apiKey=$("key").value.trim()||localStorage.getItem(KEY);
+const model=$("model").value;
+addMessage("user",text);
+$("message").value="";
+if(!apiKey){
+addMessage("bot","Pehle Gemini API key daalo aur Save Settings dabao.");
+return;
+}
+$("send").disabled=true;
+$("status").textContent="SWARA IS THINKING...";
+try{
+// FIXED: Added "bot" to filter and mapped both "bot"/"assistant" to "model"
+const contents=history
+.filter(m=>m.role==="user"||m.role==="bot"||m.role==="assistant")
+.slice(-20)
+.map(m=>({
+  role:(m.role==="bot"||m.role==="assistant")?"model":"user",
+  parts:[{text:m.text}]
+}));
+
+const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent",{
+method:"POST",
+headers:{"Content-Type":"application/json","x-goog-api-key":apiKey},
+body:JSON.stringify({
+systemInstruction:{parts:[{text:"You are SWARA, a friendly female AI companion. Be warm, natural, supportive and helpful. Speak Hindi or Hinglish when the user does. Never claim to be human."}]},
+contents,
+generationConfig:{temperature:0.8,maxOutputTokens:700}
+})
+});
+const data=await res.json();
+if(!res.ok)throw Error(data.error?.message||"API request failed");
+const answer=data.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("").trim();
+if(!answer)throw Error("Empty AI response");
+addMessage("bot",answer);
+speak(answer);
+$("status").textContent="SWARA IS ONLINE";
+}catch(e){
+addMessage("bot","Error: "+e.message+"\nAPI key, model aur internet check karo.");
+$("status").textContent="CONNECTION ERROR";
+}finally{$("send").disabled=false}
+}
+
+$("send").onclick=sendMessage;
+$("message").addEventListener("keydown",e=>{if(e.key==="Enter")sendMessage()});
+
+$("mic").onclick=()=>{
+const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!Recognition){alert("Mic recognition support nahi hai. Chrome mein try karo.");return}
+const r=new Recognition();
+r.lang="hi-IN";
+r.interimResults=false;
+r.onresult=e=>{$("message").value=e.results[0][0].transcript;sendMessage()};
+r.onerror=e=>alert("Mic error: "+e.error);
+r.start();
+};
+</script>
